@@ -170,8 +170,10 @@ def _format_argument(arg):
     yield '.. option:: {}'.format(arg.human_readable_name)
     yield ''
     yield _indent(
-        '{} argument{}'.format(
-            'Required' if arg.required else 'Optional', '(s)' if arg.nargs != 1 else ''
+        '**{} argument{}** {}'.format(
+            'Required' if arg.required else 'Optional', 
+            '(s)' if arg.nargs != 1 else '',
+            arg.help or "",
         )
     )
 
