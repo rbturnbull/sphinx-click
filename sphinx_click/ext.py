@@ -10,6 +10,8 @@ from docutils import statemachine
 from sphinx.util import logging
 from sphinx.util import nodes as sphinx_nodes
 
+import typer
+
 LOG = logging.getLogger(__name__)
 
 NESTED_FULL = 'full'
@@ -170,10 +172,11 @@ def _format_argument(arg):
     yield '.. option:: {}'.format(arg.human_readable_name)
     yield ''
     yield _indent(
-        '**{} argument{}** {}'.format(
+        '**{} argument{}** {} {}'.format(
             'Required' if arg.required else 'Optional', 
             '(s)' if arg.nargs != 1 else '',
             arg.help or "",
+            arg.type,
         )
     )
 
@@ -389,12 +392,30 @@ class ClickDirective(rst.Directive):
 
             raise self.error(err_msg)
 
+        function_name = None
+        if "." in attr_name:
+            components = attr_name.split(".")
+            attr_name = components[0]
+            function_name = components[1]
+
         if not hasattr(mod, attr_name):
             raise self.error(
                 'Module "{}" has no attribute "{}"'.format(module_name, attr_name)
             )
 
+        # Allows the attr_name to be a member of a class
         parser = getattr(mod, attr_name)
+        if function_name:
+            parser = getattr(parser, function_name)
+
+        # If the reference is a callable then get the return value of the callable
+        if callable(parser):
+            parser = parser()
+
+        # Check if we have a typer instance
+        # if so, then get the click object
+        if isinstance(parser, typer.main.Typer):
+            parser = typer.main.get_command(parser)
 
         if not isinstance(parser, click.BaseCommand):
             raise self.error(
