@@ -409,7 +409,7 @@ class ClickDirective(rst.Directive):
             parser = getattr(parser, function_name)
 
         # If the reference is a callable then get the return value of the callable
-        if callable(parser):
+        if callable(parser) and not isinstance(parser, typer.main.Typer):
             parser = parser()
 
         # Check if we have a typer instance
